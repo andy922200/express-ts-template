@@ -1,4 +1,4 @@
-export interface CustomError extends Error{
-    statusCode:number;
-    isOperational:boolean;
+export interface CustomError extends Error {
+  statusCode: number
+  isOperational: boolean
 }

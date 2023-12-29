@@ -1,7 +1,6 @@
-import { Express } from "express"
-import demoRouter from "./demo"
+import { Express } from 'express'
+import demoRouter from './demo'
 
-
-export const routerList = (app:Express) => {
-    app.use("/demo", demoRouter)
+export const routerList = (app: Express) => {
+  app.use('/demo', demoRouter)
 }
