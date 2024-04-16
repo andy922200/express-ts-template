@@ -1,14 +1,30 @@
-import { Request, Response, NextFunction } from 'express'
-import { CustomError } from '../types/index'
+import { Request, Response } from 'express'
+import { CustomError, IEnvType } from '../types/index'
 
-export const getHttpResponse = ({ data, message }: { data: string | any[]; message?: string }) => {
-  const result: Record<string, any> = { status: 'success' }
+enum StatusType {
+  success = 'success',
+  fail = 'fail',
+  error = 'error',
+}
+
+export const getHttpResponse = ({
+  data,
+  message,
+}: {
+  data: string | any[] | Record<string, any>
+  message?: string
+}) => {
+  const result: Record<string, any> = { status: StatusType.success }
   if (data) result.data = data
   if (message) result.message = message
   return result
 }
 
-// custom error
+export const showError = (err: CustomError, res: Response) => {
+  process.env.NODE_ENV === IEnvType.production ? resErrorProd(err, res) : resErrorDev(err, res)
+}
+
+// generate error Message
 export const appError = (statusCode: number, errName: string, errMessage: string) => {
   const error = new Error(errMessage) as CustomError
   error.name = errName
@@ -17,38 +33,24 @@ export const appError = (statusCode: number, errName: string, errMessage: string
   return error
 }
 
-// async func catch
-export const handleErrorAsync = function (
-  func: (req: Request, res: Response, next: NextFunction) => Promise<void>,
-) {
-  return function (req: Request, res: Response, next: NextFunction) {
-    func(req, res, next).catch(function (e: any) {
-      console.log(e) // for console debug
-      return next(appError(400, '', 'Something wrong happened'))
-    })
+// system error or custom error
+const resErrorStatus = ({ statusCode }: { statusCode: number }): StatusType => {
+  if (statusCode === 500) {
+    return StatusType.error
   }
+  return StatusType.fail
 }
 
-// error in dev
-export const resErrorDev = (err: CustomError, res: Response) => {
+const resErrorDev = (err: CustomError, res: Response) => {
   res.status(err.statusCode).json({
-    status: 'false',
+    status: StatusType.error,
     message: err.message,
     error: err,
     stack: err.stack,
   })
 }
 
-// system error or custom error
-export const resErrorStatus = ({ statusCode }: { statusCode: number }): 'false' | 'error' => {
-  if (statusCode === 500) {
-    return 'error'
-  }
-  return 'false'
-}
-
-// error in prod
-export const resErrorProd = (err: CustomError, res: Response) => {
+const resErrorProd = (err: CustomError, res: Response) => {
   const resErrorData = {
     status: '',
     message: '',
@@ -72,7 +74,7 @@ export const errorHandlerMainProcess = (err: CustomError, _req: Request, res: Re
   if (err) {
     err.statusCode = err.statusCode || 500
     // dev
-    if (process.env.NODE_ENV === 'dev') {
+    if (process.env.NODE_ENV === IEnvType.dev) {
       return resErrorDev(err, res)
     }
     // production

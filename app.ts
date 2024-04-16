@@ -2,13 +2,19 @@
 import cors from 'cors'
 import dotenv from 'dotenv'
 import express from 'express'
-import corsConfigs from './config/cors'
+import { generateCorsConfig } from './config/cors'
 
 dotenv.config()
 const app = express()
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
-app.use(cors(corsConfigs))
+app.use(
+  cors(
+    generateCorsConfig({
+      allowedOrigins: process.env.ALLOWED_ORIGINS?.split(','),
+    }),
+  ),
+)
 
 /* PORT should be capitalized */
 const port = process.env.PORT || 3000

@@ -1,18 +1,24 @@
 import { Request, Response } from 'express'
-import request from '../utils/axios'
-import { getHttpResponse, handleErrorAsync } from '../utils/mixinTools'
+import { useAxios } from '../utils/axios'
+import { getHttpResponse, showError, appError } from '../utils/mixinTools'
 
 export const demoController = {
-  getDogs: handleErrorAsync(async (_req: Request, res: Response) => {
-    const { target } = await request<string>({
-      url: 'breeds/image/random',
-      method: 'get',
-    })
+  getDogs: async (_req: Request, res: Response) => {
+    try {
+      const { axios } = useAxios({ baseURL: `https://dog.ceo/api` })
 
-    res.status(200).json(
-      getHttpResponse({
-        data: target,
-      }),
-    )
-  }),
+      const { target } = await axios<string>({
+        url: 'breeds/image/random',
+        method: 'get',
+      })
+
+      res.status(200).json(
+        getHttpResponse({
+          data: target,
+        }),
+      )
+    } catch (error) {
+      showError(appError(400, 'api error', `API Error: ${error}`), res)
+    }
+  },
 }
