@@ -1,20 +1,18 @@
-import { Request, Response } from 'express'
-import { useAxios } from '../utils/axios'
+import { Request, Response, NextFunction } from 'express'
+import { fetchFromDogAPI } from '../api/demo'
 import { getHttpResponse, showError, appError } from '../utils/mixinTools'
 
 export const demoController = {
-  getDogs: async (_req: Request, res: Response) => {
+  getDogs: async (_req: Request, res: Response, _next: NextFunction) => {
     try {
-      const { axios } = useAxios({ baseURL: `https://dog.ceo/api` })
-
-      const { target } = await axios<string>({
+      const result = await fetchFromDogAPI({
         url: 'breeds/image/random',
         method: 'get',
       })
 
       res.status(200).json(
         getHttpResponse({
-          data: target,
+          data: result,
         }),
       )
     } catch (error) {
